@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FloodGuard AI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+:root{--bg:#eaf2f6;--panel:#fff;--line:#c9dbe4;--text:#0c2233;--mute:#52697a;--accent:#0b7a8f;--accent-ink:#fff;--good:#2f8f5b;--warn:#c98200;--bad:#c8372d;--water:#2aa3b8;--r:14px;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#08151f;--panel:#0f2433;--line:#24465a;--text:#eaf3f8;--mute:#93b0c1;--accent:#4cc9d8;--accent-ink:#06202a;--good:#5fd08f;--warn:#f0b43c;--bad:#ff7a6e;--water:#3bb8cc}}
+:root[data-theme="dark"]{--bg:#08151f;--panel:#0f2433;--line:#24465a;--text:#eaf3f8;--mute:#93b0c1;--accent:#4cc9d8;--accent-ink:#06202a;--good:#5fd08f;--warn:#f0b43c;--bad:#ff7a6e;--water:#3bb8cc}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+nav{background:var(--panel);border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.brand{font-weight:800;font-size:20px;margin-bottom:2px}
+.sub{color:var(--mute);font-size:13px;margin-bottom:18px}
+.nb{display:flex;gap:10px;align-items:center;background:none;border:0;color:var(--text);padding:10px 12px;border-radius:10px;text-align:left}
+.nb[aria-current="page"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.nb:hover:not([aria-current]){background:var(--bg)}
+.sp{flex:1}
+.tg{border:1px solid var(--line);background:none;color:var(--text);border-radius:10px;padding:8px 12px}
+main{padding:28px clamp(16px,4vw,44px);max-width:1100px;width:100%}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0 0 6px;font-weight:800}
+h2{font-size:20px;margin:0 0 12px}
+p.lead{color:var(--mute);margin:0 0 24px;max-width:60ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1.3fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}
+.row{margin-bottom:18px}
+.row label{display:flex;justify-content:space-between;font-weight:600;margin-bottom:6px}
+.row label output{color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.stat{padding:14px 16px}.stat b{display:block;font-size:26px;font-weight:800}.stat span{color:var(--mute);font-size:14px}
+.cta{width:100%;background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:14px;font-weight:700;font-size:17px;margin-top:6px}
+.cta:hover{filter:brightness(1.08)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:99px;padding:6px 14px;font-size:14px}
+.chip:hover{border-color:var(--accent)}
+.gaugewrap{display:flex;gap:18px;align-items:stretch}
+.staff{position:relative;width:70px;height:260px;border:2px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);flex:none}
+.fill{position:absolute;left:0;right:0;bottom:0;background:var(--water);opacity:.85;transition:height .35s}
+.tick{position:absolute;right:0;width:22px;border-top:2px solid var(--text);font-size:11px;color:var(--text)}
+.tick i{position:absolute;right:26px;top:-9px;font-style:normal;background:var(--bg);padding:0 3px}
+.zone{position:absolute;left:0;right:0;border-top:2px dashed var(--bad);top:30%}
+.zone span{position:absolute;left:4px;top:3px;font-size:11px;color:var(--bad);font-weight:600}
+.res{display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.badge{display:inline-block;font-weight:800;font-size:22px}
+.low{color:var(--good)}.mod{color:var(--warn)}.high{color:var(--bad)}
+.bar{height:12px;border-radius:9px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.note{color:var(--mute);font-size:14px}
+.ft{display:grid;grid-template-columns:110px 1fr 48px;gap:10px;align-items:center;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:600}
+.scroll{overflow-x:auto}
+#stale{border-left:3px solid var(--warn);padding:2px 10px;margin-bottom:10px;font-size:14px}
+#alert{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+#alert[hidden]{display:none}
+.abox{background:var(--panel);color:var(--text);border:3px solid var(--bad);border-radius:16px;max-width:440px;width:100%;padding:26px;animation:pop .25s}
+.abox h2{color:var(--bad);margin:0 0 8px;font-size:26px}
+.abox p{margin:0 0 16px}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.abox{animation:none}}
+.empty{text-align:center;padding:36px 12px;color:var(--mute)}
+.screen{display:none}.screen.on{display:block}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}
+.steps li{border-left:3px solid var(--accent);padding:2px 0 2px 12px}
+.steps b{display:block}
+@media (max-width:860px){
+ .app{grid-template-columns:1fr}
+ nav{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-right:0;border-bottom:1px solid var(--line)}
+ .brand{margin:0 8px 0 0}.sub{display:none}.sp{display:none}
+ .g2,.g4,.steps{grid-template-columns:1fr 1fr}
+}
+@media (max-width:560px){.g2,.g4,.steps{grid-template-columns:1fr}.gaugewrap{flex-direction:column}.ft{grid-template-columns:90px 1fr 44px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav aria-label="Main">
+ <div class="brand">🌊 FloodGuard AI</div>
+ <div class="sub">Flood risk estimates from live readings</div>
+ <button class="nb" data-go="dashboard">🏠 Dashboard</button>
+ <button class="nb" data-go="analysis">📊 Risk analysis</button>
+ <button class="nb" data-go="predictions">🤖 Prediction log</button>
+ <div class="sp"></div>
+ <button class="tg" id="snd" aria-pressed="true">🔔 Alert sound: On</button>
+ <button class="tg" id="vc" aria-pressed="true">🗣️ Voice alert: On</button>
+ <button class="tg" id="theme">Switch theme</button>
+</nav>
+<main>
+
+<section class="screen" id="dashboard">
+ <h1>Is the water going to rise?</h1>
+ <p class="lead">Set the current readings for your area, then run the model to see the estimated flood risk.</p>
+ <div class="grid g4 row" id="stats"></div>
+ <div class="grid g2">
+  <div class="card">
+   <h2>Environmental readings</h2>
+   <div class="chips">
+    <button class="chip" data-p="35,32,55,1.0">Dry day</button>
+    <button class="chip" data-p="140,27,88,4.5">Heavy monsoon</button>
+    <button class="chip" data-p="250,25,96,8.2">Flash flood</button>
+   </div>
+   <div id="sliders"></div>
+   <button class="cta" id="run">Analyze flood risk</button>
+  </div>
+  <div class="card">
+   <h2>Result</h2>
+   <div id="stale" hidden>Readings changed. Select Analyze flood risk to update this result.</div>
+   <div class="gaugewrap">
+    <div class="staff" aria-label="Water level gauge"><div class="zone"><span>Danger</span></div><div class="fill" id="fill"></div></div>
+    <div class="res" id="result"><div class="empty" style="padding:0;text-align:left">Run the analysis to see the risk level and flood probability.</div></div>
+   </div>
+  </div>
+ </div>
+ <h2 style="margin-top:28px">How it works</h2>
+ <ol class="steps">
+  <li><b>Enter readings</b><span class="note">Rainfall, temperature, humidity and water level.</span></li>
+  <li><b>Run the model</b><span class="note">The trained classifier scores your inputs.</span></li>
+  <li><b>See the risk</b><span class="note">You get a class and a probability.</span></li>
+  <li><b>Check official alerts</b><span class="note">Always confirm with local authorities.</span></li>
+ </ol>
+</section>
+
+<section class="screen" id="analysis">
+ <h1>What is driving the risk?</h1>
+ <p class="lead">See how much each reading matters to the trained model, and review the current risk.</p>
+ <div class="grid g2">
+  <div class="card"><h2>Feature importance</h2><div id="contrib"></div></div>
+  <div class="card"><h2>Current risk</h2><div id="aSummary"></div></div>
+ </div>
+</section>
+
+<section class="screen" id="predictions">
+ <h1>Prediction log</h1>
+ <p class="lead">Every analysis you run in this session appears here.</p>
+ <div class="card scroll" id="log"></div>
+</section>
+
+<p class="note" style="margin-top:28px">The model is a logistic regression trained on a synthetic dataset (flood_data.csv) and built into this page. Predictions are estimates, not official flood warnings.</p>
+</main>
+</div>
+
+<div id="alert" hidden role="alertdialog" aria-modal="true" aria-labelledby="atitle" aria-describedby="amsg"><div class="abox"><h2 id="atitle">⚠️ High flood risk</h2><p id="amsg"></p><button class="cta" id="aok">I understand</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+const F=[
+ {k:'rain',n:'Rainfall',u:' mm',min:0,max:300,step:1,v:50,ic:'🌧️'},
+ {k:'temp',n:'Temperature',u:' °C',min:20,max:45,step:1,v:30,ic:'🌡️'},
+ {k:'hum',n:'Humidity',u:'%',min:40,max:100,step:1,v:70,ic:'💧'},
+ {k:'wl',n:'Water level',u:' m',min:0,max:10,step:0.1,v:2,ic:'🌊'}];
+const S={log:[]};try{S.log=JSON.parse(localStorage.getItem('fg_log')||'[]')}catch(e){}
+F.forEach(f=>S[f.k]=f.v);
+const $=id=>document.getElementById(id);
+/* Logistic regression trained in Python on flood_data.csv (synthetic data), built into this page. */
+const MODEL={w:{rain:0.02064,temp:0.02433,hum:0.01853,wl:0.46158},b:-5.3851,imp:[0.517,0.349,0.087,0.047]};
+function score(){
+ const z=MODEL.b+MODEL.w.rain*S.rain+MODEL.w.temp*S.temp+MODEL.w.hum*S.hum+MODEL.w.wl*S.wl;
+ return {p:1/(1+Math.exp(-z)),c:MODEL.imp};
+}
+function level(p){return p<.35?['Low flood risk','low']:p<.65?['Medium flood risk','mod']:['High flood risk','high']}
+function fmt(f,v){return (f.step<1?(+v).toFixed(1):v)+f.u}
+function sliders(){
+ $('sliders').innerHTML=F.map(f=>`<div class="row"><label for="s_${f.k}">${f.ic} ${f.n}<output id="o_${f.k}">${fmt(f,S[f.k])}</output></label><input type="range" id="s_${f.k}" data-k="${f.k}" min="${f.min}" max="${f.max}" step="${f.step}" value="${S[f.k]}"></div>`).join('');
+ document.querySelectorAll('input[type=range]').forEach(i=>i.oninput=e=>{S[i.dataset.k]=+i.value;sync()});
+}
+function sync(){
+ F.forEach(f=>{const o=$('o_'+f.k),s=$('s_'+f.k);if(o){o.textContent=fmt(f,S[f.k]);s.value=S[f.k]}});
+ $('stats').innerHTML=F.map(f=>`<div class="card stat"><span>${f.ic} ${f.n}</span><b>${fmt(f,S[f.k])}</b></div>`).join('');
+ $('fill').style.height=(S.wl/10*100)+'%';
+ $('stale').hidden=!S.ran;
+ renderAnalysis();
+}
+function renderResult(r){
+ const [t,c]=level(r.p),pc=(r.p*100).toFixed(1);
+ $('result').innerHTML=`<span class="badge ${c}">${c==='high'?'⚠️':c==='mod'?'🟡':'✅'} ${t}</span>
+ <div class="bar" role="progressbar" aria-valuenow="${pc}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pc}%"></i></div>
+ <div>Estimated flood probability: <b>${pc}%</b></div>
+ <div class="note">${c==='high'?'Review local alerts and follow guidance from emergency management authorities.':'Keep monitoring conditions and follow official weather and flood advisories.'}</div>`;
+}
+function renderAnalysis(){
+ const r=score(),tot=r.c.reduce((a,b)=>a+b,0)||1,[t,c]=level(r.p);
+ const names=['Rainfall','Water level','Humidity','Temperature'];
+ $('contrib').innerHTML=r.c.map((v,i)=>`<div class="ft"><span>${names[i]}</span><div class="bar"><i style="width:${v/tot*100}%"></i></div><b>${Math.round(v/tot*100)}%</b></div>`).join('')+'<p class="note">Shares come from the weights the model learned during training.</p>';
+ $('aSummary').innerHTML=`<span class="badge ${c}">${t}</span><div class="bar" style="margin:12px 0"><i style="width:${r.p*100}%"></i></div><div>Probability: <b>${(r.p*100).toFixed(1)}%</b></div><p class="note">Based on rainfall ${fmt(F[0],S.rain)}, temperature ${fmt(F[1],S.temp)}, humidity ${fmt(F[2],S.hum)}, water level ${fmt(F[3],S.wl)}.</p>`;
+}
+function renderLog(){
+ $('log').innerHTML=S.log.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="tg" id="xl">Download Excel</button><button class="tg" id="pdf">Download PDF</button><button class="tg" id="clr">Clear log</button></div><table><thead><tr><th>Time</th><th>Rain</th><th>Temp</th><th>Humidity</th><th>Water</th><th>Probability</th><th>Result</th></tr></thead><tbody>${S.log.map(l=>`<tr><td>${l.t}</td><td>${l.rain} mm</td><td>${l.temp} °C</td><td>${l.hum}%</td><td>${(+l.wl).toFixed(1)} m</td><td>${(l.p*100).toFixed(1)}%</td><td class="${level(l.p)[1]}"><b>${level(l.p)[0]}</b></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No predictions yet. Go to the Dashboard and select Analyze flood risk.</div>';
+ const c=$('clr');if(c)c.onclick=()=>{S.log=[];save();renderLog()};
+ const x=$('xl');if(x)x.onclick=exportXlsx;
+ const d=$('pdf');if(d)d.onclick=exportPdf;
+}
+let soundOn=true;try{soundOn=localStorage.getItem('fg_sound')!=='off'}catch(e){}
+let actx;
+function beep(){
+ if(!soundOn)return;
+ try{
+  actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==='suspended')actx.resume();
+  [0,0.45,0.9].forEach(t=>{
+   const o=actx.createOscillator(),g=actx.createGain(),n=actx.currentTime+t;
+   o.type='square';o.frequency.setValueAtTime(880,n);o.frequency.setValueAtTime(660,n+0.2);
+   g.gain.setValueAtTime(0.0001,n);g.gain.exponentialRampToValueAtTime(0.25,n+0.02);g.gain.exponentialRampToValueAtTime(0.0001,n+0.4);
+   o.connect(g);g.connect(actx.destination);o.start(n);o.stop(n+0.42);
+  });
+ }catch(e){}
+}
+function notifyHigh(r){
+ const pc=(r.p*100).toFixed(1);
+ $('amsg').textContent='The model estimates a '+pc+'% chance of flooding (rainfall '+S.rain+' mm, water level '+(+S.wl).toFixed(1)+' m). Review local alerts and follow guidance from emergency management authorities.';
+ $('alert').hidden=false;$('aok').focus();beep();speak();
+ try{if('Notification' in window&&Notification.permission==='granted')new Notification('FloodGuard AI: High flood risk',{body:pc+'% flood probability. Check local alerts.'})}catch(e){}
+}
+function syncSnd(){const b=$('snd');b.textContent=soundOn?'🔔 Alert sound: On':'🔕 Alert sound: Off';b.setAttribute('aria-pressed',soundOn)}
+$('snd').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('fg_sound',soundOn?'on':'off')}catch(e){}syncSnd()};
+$('aok').onclick=()=>{$('alert').hidden=true;try{speechSynthesis.cancel()}catch(e){}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('alert').hidden=true});
+syncSnd();
+let voiceOn=true;try{voiceOn=localStorage.getItem('fg_voice')!=='off'}catch(e){}
+function speak(){
+ if(!voiceOn||!('speechSynthesis' in window))return;
+ try{
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance('Warning! High flood risk. Please check local alerts.');
+  u.rate=0.95;u.volume=1;
+  setTimeout(()=>speechSynthesis.speak(u),soundOn?1400:0);
+ }catch(e){}
+}
+function syncVc(){const b=$('vc');b.textContent=voiceOn?'🗣️ Voice alert: On':'🔇 Voice alert: Off';b.setAttribute('aria-pressed',voiceOn)}
+$('vc').onclick=()=>{voiceOn=!voiceOn;try{localStorage.setItem('fg_voice',voiceOn?'on':'off')}catch(e){}syncVc()};
+syncVc();
+function logRows(){return S.log.map(l=>({'Time':l.t,'Rainfall (mm)':l.rain,'Temperature (°C)':l.temp,'Humidity (%)':l.hum,'Water level (m)':+(+l.wl).toFixed(1),'Probability':(l.p*100).toFixed(1)+'%','Result':level(l.p)[0]}))}
+function exportXlsx(){
+ try{
+  const ws=XLSX.utils.json_to_sheet(logRows()),wb=XLSX.utils.book_new();
+  ws['!cols']=[{wch:22},{wch:14},{wch:18},{wch:14},{wch:16},{wch:12},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws,'Prediction log');
+  XLSX.writeFile(wb,'floodguard_prediction_log.xlsx');
+ }catch(e){alert('Excel export needs an internet connection the first time the page loads.')}
+}
+function exportPdf(){
+ try{
+  const rows=logRows(),doc=new window.jspdf.jsPDF({orientation:'landscape'});
+  doc.setFontSize(16);doc.text('FloodGuard AI - Prediction Log',14,16);
+  doc.setFontSize(10);doc.text('Generated '+new Date().toLocaleString()+'. Predictions are estimates, not official flood warnings.',14,23);
+  doc.autoTable({head:[Object.keys(rows[0])],body:rows.map(r=>Object.values(r)),startY:28,headStyles:{fillColor:[11,122,143]}});
+  doc.save('floodguard_prediction_log.pdf');
+ }catch(e){alert('PDF export needs an internet connection the first time the page loads.')}
+}
+function save(){try{localStorage.setItem('fg_log',JSON.stringify(S.log.slice(0,50)))}catch(e){}}
+$('run').onclick=()=>{try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}S.ran=true;$('stale').hidden=true;const r=score();renderResult(r);if(level(r.p)[1]==='high')notifyHigh(r);S.log.unshift({...S,log:undefined,p:r.p,t:new Date().toLocaleString([], {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})});save();renderLog()};
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{[S.rain,S.temp,S.hum,S.wl]=b.dataset.p.split(',').map(Number);sync()});
+function go(id){
+ if(!['dashboard','analysis','predictions'].includes(id))id='dashboard';
+ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+ document.querySelectorAll('.nb').forEach(b=>b.toggleAttribute('aria-current',b.dataset.go===id)||0);
+ document.querySelectorAll('.nb').forEach(b=>{if(b.dataset.go===id)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ try{if(location.hash.slice(1)!==id)location.hash=id}catch(e){}
+}
+document.querySelectorAll('.nb').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('theme').onclick=()=>{const d=document.documentElement,dark=d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;d.dataset.theme=dark?'light':'dark'};
+(function ticks(){const s=document.querySelector('.staff');[0,2,4,6,8,10].forEach(m=>{const t=document.createElement('div');t.className='tick';t.style.bottom=(m/10*100)+'%';t.innerHTML=m?`<i>${m} m</i>`:'';s.appendChild(t)})})();
+sliders();sync();renderLog();go(location.hash.slice(1));
+window.addEventListener('hashchange',()=>go(location.hash.slice(1)));
+</script>
+</body>
+</html>
